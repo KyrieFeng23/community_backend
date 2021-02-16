@@ -3,7 +3,7 @@ package com.community.common.exception;
 import com.community.common.api.IErrorCode;
 
 /**
- * Description:
+ * Description:自定义API异常
  *
  * @author fyf
  * @since 2021/2/16 9:38 下午

@@ -90,6 +90,7 @@ public class ApiResult<T> implements Serializable {   //json数据
      * @return {code:枚举ApiErrorCode取,message:自定义,data:null}
      */
     public static <T> ApiResult<T> failed(String message) {
+        System.out.println("1111111");
         return new ApiResult<T>(ApiErrorCode.FAILED.getCode(), message, null);
     }
 
