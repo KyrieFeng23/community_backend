@@ -14,6 +14,8 @@ import javax.validation.Valid;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.community.jwt.JwtUtil.USER_NAME;
+
 /**
  * Description:
  *
@@ -51,5 +53,11 @@ public class UmsUserController extends BaseController{
         map.put("token", token);
         //存在map里返回到客户端
         return ApiResult.success(map, "登录成功");
+    }
+
+    @RequestMapping(value = "/info",method = RequestMethod.GET)
+    public ApiResult<UmsUser> getUser(@RequestHeader(value = USER_NAME) String userName){
+        UmsUser user = iUmsUserService.getUserByUsername(userName);
+        return ApiResult.success(user);
     }
 }

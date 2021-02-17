@@ -23,6 +23,8 @@ public class JwtUtil {
     public static final String HEADER_STRING = "Authorization";
     public static final String USER_NAME = "userName";
 
+
+    //生成token
     public static String generateToken(String userId) {
         HashMap<String, Object> map = new HashMap<>();
         //you can put any data in the map
@@ -32,6 +34,54 @@ public class JwtUtil {
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))      //到期时间，这里是1000小时
                 .signWith(SignatureAlgorithm.HS512, SECRET)
                 .compact();
-        return jwt;
+        return jwt; //jwt前面一般都会加Bearer
+    }
+
+    //校验token
+    public static HttpServletRequest validateTokenAndAddUserIdToHeader(HttpServletRequest request) {
+        //拿到token
+        String token = request.getHeader(HEADER_STRING);
+        if (token != null) {
+            // parse the token.
+            try {
+                Map<String, Object> body = Jwts.parser()   //parser解析
+                        .setSigningKey(SECRET)
+                        .parseClaimsJws(token.replace(TOKEN_PREFIX, ""))        //去掉刚才token最前面的"Bearer "
+                        .getBody();             //还原出来刚才生成token的map对象
+                //返回一个定制的http请求对象
+                return new CustomHttpServletRequest(request, body);
+            } catch (Exception e) {
+                logger.info(e.getMessage());
+                throw new TokenValidationException(e.getMessage());
+            }
+        } else {
+            throw new TokenValidationException("Missing token");
+        }
+    }
+
+
+    public static class CustomHttpServletRequest extends HttpServletRequestWrapper {
+        private Map<String, String> claims;
+
+        public CustomHttpServletRequest(HttpServletRequest request, Map<String, ?> claims) {
+            super(request);
+            this.claims = new HashMap<>();
+            claims.forEach((k, v) -> this.claims.put(k, String.valueOf(v)));
+        }
+
+        @Override
+        public Enumeration<String> getHeaders(String name) {
+            if (claims != null && claims.containsKey(name)) {
+                return Collections.enumeration(Arrays.asList(claims.get(name)));
+            }
+            return super.getHeaders(name);
+        }
+
+    }
+
+    static class TokenValidationException extends RuntimeException {
+        public TokenValidationException(String msg) {
+            super(msg);
+        }
     }
 }
