@@ -30,9 +30,9 @@
         LEFT JOIN ums_user u
         ON t.user_id = u.id
         <where>
---             test里的内容是来自html或者jsp的，这里是来自controller
+<!--             test里的内容是来自html或者jsp的，这里是来自controller -->
             <if test="tab == 'hot'">
---             &lt; >=  gt;小于等于   这里必须要转义不然会报错
+<!--             &lt; >=  gt;小于等于   这里必须要转义不然会报错    -->
                 date(t.create_time) &lt;= date_add(curdate(), interval 1 day)
                 and date(t.create_time) &gt;= date_sub(curdate(), interval 7 day)
             </if>
