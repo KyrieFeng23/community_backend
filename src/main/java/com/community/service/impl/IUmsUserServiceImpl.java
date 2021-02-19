@@ -4,13 +4,17 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.community.common.exception.ApiAsserts;
 import com.community.jwt.JwtUtil;
+import com.community.mapper.BmsTopicMapper;
 import com.community.mapper.UmsUserMapper;
 import com.community.model.dto.LoginDTO;
 import com.community.model.dto.RegisterDTO;
 import com.community.model.entity.UmsUser;
+import com.community.model.vo.ProfileVO;
 import com.community.service.IUmsUserService;
 import com.community.utils.MD5Utils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
@@ -27,6 +31,9 @@ import java.util.Date;
 @Transactional(rollbackFor = Exception.class)
 public class IUmsUserServiceImpl extends ServiceImpl<UmsUserMapper, UmsUser>
 implements IUmsUserService {
+
+    @Autowired
+    private BmsTopicMapper bmsTopicMapper;
 
     @Override
     public UmsUser executeRegister(RegisterDTO dto) {
@@ -75,4 +82,13 @@ implements IUmsUserService {
         return token;
     }
 
+    @Override
+    public ProfileVO getUserProfile(String id) {
+        ProfileVO profile = new ProfileVO();
+        UmsUser user = baseMapper.selectById(id);
+        //把user和profile对象相同属性字段的值拷贝给profile，这样可以快速赋值，否则需要使用大量的user和getter语句
+        BeanUtils.copyProperties(user, profile);
+
+        return profile;
+    }
 }

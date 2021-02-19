@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 
+import java.util.Map;
+
 import static com.community.jwt.JwtUtil.USER_NAME;
 
 /**
@@ -44,5 +46,12 @@ public class BmsPostController extends BaseController {
         UmsUser user = umsUserService.getUserByUsername(userName);
         BmsPost topic = iBmsPostService.create(dto, user);
         return ApiResult.success(topic);
+    }
+
+    @GetMapping()
+    public ApiResult<Map<String, Object>> view(@RequestParam("id") String id) {
+        //因为有帖子、用户、标签三个表的信息，所以用map
+        Map<String, Object> map = iBmsPostService.viewTopic(id);
+        return ApiResult.success(map);
     }
 }

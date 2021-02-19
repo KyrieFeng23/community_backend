@@ -1,6 +1,7 @@
 package com.community.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Assert;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -14,7 +15,10 @@ import com.community.model.entity.BmsTag;
 import com.community.model.entity.BmsTopicTag;
 import com.community.model.entity.UmsUser;
 import com.community.model.vo.PostVO;
+import com.community.model.vo.ProfileVO;
 import com.community.service.IBmsPostService;
+import com.community.service.IBmsTagService;
+import com.community.service.IUmsUserService;
 import com.vdurmont.emoji.EmojiParser;
 import org.hibernate.validator.internal.util.stereotypes.Lazy;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,8 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -41,7 +44,11 @@ public class IBmsPostServiceImpl extends ServiceImpl<BmsTopicMapper, BmsPost> im
 
     @Autowired
     @Lazy
-    private com.community.service.IBmsTagService iBmsTagService;
+    private IBmsTagService iBmsTagService;
+
+    @Autowired
+    private IUmsUserService iUmsUserService;
+
     @Autowired
     private com.community.service.IBmsTopicTagService IBmsTopicTagService;
 
@@ -96,5 +103,34 @@ public class IBmsPostServiceImpl extends ServiceImpl<BmsTopicMapper, BmsPost> im
         }
 
         return topic;
+    }
+
+    @Override
+    public Map<String, Object> viewTopic(String id) {
+        Map<String, Object> map = new HashMap<>(16);
+        BmsPost topic = this.baseMapper.selectById(id);
+        Assert.notNull(topic, "当前话题不存在,或已被作者删除");
+        // 查询话题详情
+        topic.setView(topic.getView() + 1);
+        this.baseMapper.updateById(topic);
+        // emoji转码
+        topic.setContent(EmojiParser.parseToUnicode(topic.getContent()));
+        map.put("topic", topic);
+        // 标签
+        QueryWrapper<BmsTopicTag> wrapper = new QueryWrapper<>();
+        wrapper.lambda().eq(BmsTopicTag::getTopicId, topic.getId());
+        Set<String> set = new HashSet<>();
+        for (BmsTopicTag articleTag : IBmsTopicTagService.list(wrapper)) {
+            set.add(articleTag.getTagId());
+        }
+        List<BmsTag> tags = iBmsTagService.listByIds(set);
+        map.put("tags", tags);
+
+        // 作者
+
+        ProfileVO user = iUmsUserService.getUserProfile(topic.getUserId());
+        map.put("user", user);
+
+        return map;
     }
 }
