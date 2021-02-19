@@ -1,18 +1,28 @@
 package com.community.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Assert;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.community.mapper.BmsTagMapper;
 import com.community.mapper.BmsTopicMapper;
+import com.community.mapper.UmsUserMapper;
+import com.community.model.dto.CreateTopicDTO;
 import com.community.model.entity.BmsPost;
 import com.community.model.entity.BmsTag;
 import com.community.model.entity.BmsTopicTag;
+import com.community.model.entity.UmsUser;
 import com.community.model.vo.PostVO;
 import com.community.service.IBmsPostService;
+import com.vdurmont.emoji.EmojiParser;
+import org.hibernate.validator.internal.util.stereotypes.Lazy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,7 +36,12 @@ import java.util.stream.Collectors;
 public class IBmsPostServiceImpl extends ServiceImpl<BmsTopicMapper, BmsPost> implements IBmsPostService {
     @Resource
     private BmsTagMapper bmsTagMapper;
+    @Resource
+    private UmsUserMapper umsUserMapper;
 
+    @Autowired
+    @Lazy
+    private com.community.service.IBmsTagService iBmsTagService;
     @Autowired
     private com.community.service.IBmsTopicTagService IBmsTopicTagService;
 
@@ -50,5 +65,36 @@ public class IBmsPostServiceImpl extends ServiceImpl<BmsTopicMapper, BmsPost> im
             }
         });
         return iPage;
+    }
+
+    @Override
+    //事物处理，确保几个表的操作要么同时成功，要么同时失败
+    @Transactional(rollbackFor = Exception.class)
+    public BmsPost create(CreateTopicDTO dto, UmsUser user) {
+        BmsPost topic1 = this.baseMapper.selectOne(new LambdaQueryWrapper<BmsPost>().eq(BmsPost::getTitle, dto.getTitle()));
+        Assert.isNull(topic1, "话题已存在，请修改");
+
+        // 封装
+        BmsPost topic = BmsPost.builder()
+                .userId(user.getId())
+                .title(dto.getTitle())
+                .content(EmojiParser.parseToAliases(dto.getContent()))
+                .createTime(new Date())
+                .build();
+        this.baseMapper.insert(topic);
+
+        // 用户积分增加
+        int newScore = user.getScore() + 1;
+        umsUserMapper.updateById(user.setScore(newScore));
+
+        // 标签
+        if (!ObjectUtils.isEmpty(dto.getTags())) {
+            // 保存标签
+            List<BmsTag> tags = iBmsTagService.insertTags(dto.getTags());
+            // 处理标签与话题的关联
+            IBmsTopicTagService.createTopicTag(topic.getId(), tags);
+        }
+
+        return topic;
     }
 }

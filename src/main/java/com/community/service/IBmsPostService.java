@@ -2,7 +2,9 @@ package com.community.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.community.model.dto.CreateTopicDTO;
 import com.community.model.entity.BmsPost;
+import com.community.model.entity.UmsUser;
 import com.community.model.vo.PostVO;
 
 /**
@@ -21,4 +23,13 @@ public interface IBmsPostService extends IService<BmsPost> {
      * @return
      */
     Page<PostVO> getList(Page<PostVO> page, String tab);
+
+    /**
+     * 发布
+     *
+     * @param dto
+     * @param principal
+     * @return
+     */
+    BmsPost create(CreateTopicDTO dto, UmsUser principal);
 }
