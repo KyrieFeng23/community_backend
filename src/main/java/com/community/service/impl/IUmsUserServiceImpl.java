@@ -4,10 +4,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.community.common.exception.ApiAsserts;
 import com.community.jwt.JwtUtil;
+import com.community.mapper.BmsFollowMapper;
 import com.community.mapper.BmsTopicMapper;
 import com.community.mapper.UmsUserMapper;
 import com.community.model.dto.LoginDTO;
 import com.community.model.dto.RegisterDTO;
+import com.community.model.entity.BmsFollow;
+import com.community.model.entity.BmsPost;
 import com.community.model.entity.UmsUser;
 import com.community.model.vo.ProfileVO;
 import com.community.service.IUmsUserService;
@@ -34,6 +37,9 @@ implements IUmsUserService {
 
     @Autowired
     private BmsTopicMapper bmsTopicMapper;
+
+    @Autowired
+    private BmsFollowMapper bmsFollowMapper;
 
     @Override
     public UmsUser executeRegister(RegisterDTO dto) {
@@ -88,6 +94,14 @@ implements IUmsUserService {
         UmsUser user = baseMapper.selectById(id);
         //把user和profile对象相同属性字段的值拷贝给profile，这样可以快速赋值，否则需要使用大量的user和getter语句
         BeanUtils.copyProperties(user, profile);
+
+        // 用户文章数
+        int count = bmsTopicMapper.selectCount(new LambdaQueryWrapper<BmsPost>().eq(BmsPost::getUserId, id));
+        profile.setTopicCount(count);
+
+        // 粉丝数
+        int followers = bmsFollowMapper.selectCount((new LambdaQueryWrapper<BmsFollow>().eq(BmsFollow::getParentId, id)));
+        profile.setFollowerCount(followers);
 
         return profile;
     }
