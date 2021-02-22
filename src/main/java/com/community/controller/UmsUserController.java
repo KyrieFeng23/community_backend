@@ -1,9 +1,14 @@
 package com.community.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Assert;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.community.common.api.ApiResult;
 import com.community.model.dto.LoginDTO;
 import com.community.model.dto.RegisterDTO;
+import com.community.model.entity.BmsPost;
 import com.community.model.entity.UmsUser;
+import com.community.service.IBmsPostService;
 import com.community.service.IUmsUserService;
 import net.sf.jsqlparser.Model;
 import org.springframework.util.ObjectUtils;
@@ -28,6 +33,9 @@ import static com.community.jwt.JwtUtil.USER_NAME;
 public class UmsUserController extends BaseController{
     @Resource
     private IUmsUserService iUmsUserService;
+
+    @Resource
+    private IBmsPostService iBmsPostService;
 
     @RequestMapping(value = "/register", method = RequestMethod.POST)
 //    @PostMapping("/register")
@@ -64,5 +72,19 @@ public class UmsUserController extends BaseController{
     @RequestMapping(value = "/logout", method = RequestMethod.GET)
     public ApiResult<Object> logOut() {
         return ApiResult.success(null, "注销成功");
+    }
+
+    @GetMapping("/{username}")
+    public ApiResult<Map<String, Object>> getUserByName(@PathVariable("username") String username,
+                                                        @RequestParam(value = "pageNo", defaultValue = "1") Integer pageNo,
+                                                        @RequestParam(value = "size", defaultValue = "10") Integer size) {
+        Map<String, Object> map = new HashMap<>(16);
+        UmsUser user = iUmsUserService.getUserByUsername(username);
+        Assert.notNull(user, "用户不存在");
+        Page<BmsPost> page = iBmsPostService.page(new Page<>(pageNo, size),
+                new LambdaQueryWrapper<BmsPost>().eq(BmsPost::getUserId, user.getId()));
+        map.put("user", user);
+        map.put("topics", page);
+        return ApiResult.success(map);
     }
 }
