@@ -1,7 +1,9 @@
 package com.community.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.community.model.dto.CommentDTO;
 import com.community.model.entity.BmsComment;
+import com.community.model.entity.UmsUser;
 import com.community.model.vo.CommentVO;
 
 import java.util.List;
@@ -21,4 +23,5 @@ public interface IBmsCommentService extends IService<BmsComment> {
      */
     List<CommentVO> getCommentsByTopicID(String topicid);
 
+    BmsComment create(CommentDTO dto, UmsUser principal);
 }

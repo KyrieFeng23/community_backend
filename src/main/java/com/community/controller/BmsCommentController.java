@@ -1,16 +1,18 @@
 package com.community.controller;
 
 import com.community.common.api.ApiResult;
+import com.community.model.dto.CommentDTO;
+import com.community.model.entity.BmsComment;
+import com.community.model.entity.UmsUser;
 import com.community.model.vo.CommentVO;
 import com.community.service.IBmsCommentService;
 import com.community.service.IUmsUserService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
+
+import static com.community.jwt.JwtUtil.USER_NAME;
 
 /**
  * Description:
@@ -31,5 +33,12 @@ public class BmsCommentController extends BaseController {
     public ApiResult<List<CommentVO>> getCommentsByTopicID(@RequestParam(value = "topicid", defaultValue = "1") String topicid) {
         List<CommentVO> lstBmsComment = bmsCommentService.getCommentsByTopicID(topicid);
         return ApiResult.success(lstBmsComment);
+    }
+    @PostMapping("/add_comment")
+    public ApiResult<BmsComment> add_comment(@RequestHeader(value = USER_NAME) String userName,
+                                             @RequestBody CommentDTO dto) {
+        UmsUser user = umsUserService.getUserByUsername(userName);
+        BmsComment comment = bmsCommentService.create(dto, user);
+        return ApiResult.success(comment);
     }
 }
