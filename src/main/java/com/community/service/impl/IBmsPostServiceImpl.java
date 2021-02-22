@@ -57,20 +57,8 @@ public class IBmsPostServiceImpl extends ServiceImpl<BmsTopicMapper, BmsPost> im
         // 查询话题
         Page<PostVO> iPage = this.baseMapper.selectListAndPage(page, tab);
         // 查询话题的标签
-        iPage.getRecords().forEach(topic -> {
-//            根据帖子id找出topictag表里对应的记录
-            List<BmsTopicTag> topicTags = IBmsTopicTagService.selectByTopicId(topic.getId());
-            if (!topicTags.isEmpty()) {
-//              获取topictag里的tagid集合，当前帖子的所有标签id
-//              topictags是整个类的集合，下面这一步操作是把类的集合的tagid提取出来合成一个新的集合
-//              这是java8的一种写法，免去再次遍历的麻烦
-                List<String> tagIds = topicTags.stream().map(BmsTopicTag::getTagId).collect(Collectors.toList());
-//              根据刚才上面的tagid集合，找出一一对应的tag类
-                List<BmsTag> tags = bmsTagMapper.selectBatchIds(tagIds);
-                //保存到vo里
-                topic.setTags(tags);
-            }
-        });
+
+        setTopicTags(iPage);
         return iPage;
     }
 
@@ -137,5 +125,31 @@ public class IBmsPostServiceImpl extends ServiceImpl<BmsTopicMapper, BmsPost> im
     @Override
     public List<BmsPost> getRecommend(String id) {
         return this.baseMapper.selectRecommend(id);
+    }
+
+    @Override
+    public Page<PostVO> searchByKey(String keyword, Page<PostVO> page) {
+        // 查询话题
+        Page<PostVO> iPage = this.baseMapper.searchByKey(page, keyword);
+        // 查询话题的标签
+        setTopicTags(iPage);
+        return iPage;
+    }
+
+    private void setTopicTags(Page<PostVO> iPage) {
+        iPage.getRecords().forEach(topic -> {
+//            根据帖子id找出topictag表里对应的记录
+            List<BmsTopicTag> topicTags = IBmsTopicTagService.selectByTopicId(topic.getId());
+            if (!topicTags.isEmpty()) {
+//              获取topictag里的tagid集合，当前帖子的所有标签id
+//              topictags是整个类的集合，下面这一步操作是把类的集合的tagid提取出来合成一个新的集合
+//              这是java8的一种写法，免去再次遍历的麻烦
+                List<String> tagIds = topicTags.stream().map(BmsTopicTag::getTagId).collect(Collectors.toList());
+//              根据刚才上面的tagid集合，找出一一对应的tag类
+                List<BmsTag> tags = bmsTagMapper.selectBatchIds(tagIds);
+                //保存到vo里
+                topic.setTags(tags);
+            }
+        });
     }
 }
