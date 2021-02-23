@@ -7,6 +7,7 @@ import com.community.mapper.BmsTagMapper;
 import com.community.model.entity.BmsPost;
 import com.community.model.entity.BmsTag;
 import com.community.service.IBmsTagService;
+import com.community.service.IBmsTopicTagService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -63,5 +64,16 @@ public class IBmsTagServiceImpl extends ServiceImpl<BmsTagMapper, BmsTag> implem
         wrapper.in(BmsPost::getId, ids);
 
         return IBmsPostService.page(topicPage, wrapper);
+    }
+
+    @Override
+    public int updateTags(String tag_id) {
+        BmsTag tag = this.getById(tag_id);
+        tag.setTopicCount(tag.getTopicCount() - 1);
+        this.baseMapper.updateById(tag);
+        if (tag.getTopicCount()==0){
+            this.removeById(tag_id);
+        }
+        return 0;
     }
 }

@@ -6,14 +6,9 @@ import com.baomidou.mybatisplus.core.toolkit.Assert;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.community.common.api.ApiResult;
 import com.community.model.dto.CreateTopicDTO;
-import com.community.model.entity.BmsComment;
-import com.community.model.entity.BmsPost;
-import com.community.model.entity.BmsTopicTag;
-import com.community.model.entity.UmsUser;
+import com.community.model.entity.*;
 import com.community.model.vo.PostVO;
-import com.community.service.IBmsCommentService;
-import com.community.service.IBmsPostService;
-import com.community.service.IUmsUserService;
+import com.community.service.*;
 import com.vdurmont.emoji.EmojiParser;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,6 +19,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.community.jwt.JwtUtil.USER_NAME;
 
@@ -43,6 +39,10 @@ public class BmsPostController extends BaseController {
     private IUmsUserService umsUserService;
     @Resource
     private IBmsCommentService iBmsCommentService;
+    @Resource
+    private IBmsTopicTagService iBmsTopicTagService;
+    @Resource
+    private IBmsTagService iBmsTagService;
 
     @GetMapping("/list")
     public ApiResult<Page<PostVO>> list(@RequestParam(value = "tab", defaultValue = "latest") String tab,
@@ -95,6 +95,22 @@ public class BmsPostController extends BaseController {
         QueryWrapper<BmsComment> wrapper = new QueryWrapper<>();
         wrapper.lambda().eq(BmsComment::getTopicId, id);
         iBmsCommentService.remove(wrapper);
+        //删除对应标签记录。
+        QueryWrapper<BmsTopicTag> bmsTopicTagQueryWrapper=new QueryWrapper<>();
+        bmsTopicTagQueryWrapper.lambda().eq(BmsTopicTag::getTopicId,id);
+        //根据帖子id找到对应tag的列表
+        List<BmsTopicTag> bmsTopicTagList=iBmsTopicTagService.selectByTopicId(id);
+        if (!bmsTopicTagList.isEmpty()) {
+            //删除对应的tag记录
+            iBmsTopicTagService.remove(bmsTopicTagQueryWrapper);
+//              获取topictag里的tagid集合，当前帖子的所有标签id
+//              topictags是整个类的集合，下面这一步操作是把类的集合的tagid提取出来合成一个新的集合
+//              这是java8的一种写法，免去再次遍历的麻烦
+            List<String> tagIds = bmsTopicTagList.stream().map(BmsTopicTag::getTagId).collect(Collectors.toList());
+            tagIds.forEach(tagid->{
+                iBmsTagService.updateTags(tagid);
+            });
+        }
         return ApiResult.success(null,"删除成功");
     }
 

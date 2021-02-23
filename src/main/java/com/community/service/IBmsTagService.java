@@ -31,4 +31,11 @@ public interface IBmsTagService extends IService<BmsTag> {
      * @return
      */
     Page<BmsPost> selectTopicsByTagId(Page<BmsPost> topicPage, String id);
+
+    /**
+     * 更新或删除标签
+     * @param tag_id
+     * @return
+     */
+    int updateTags(String tag_id);
 }
