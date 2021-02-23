@@ -1,12 +1,17 @@
 package com.community.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Assert;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.community.common.api.ApiResult;
 import com.community.model.dto.CreateTopicDTO;
+import com.community.model.entity.BmsComment;
 import com.community.model.entity.BmsPost;
+import com.community.model.entity.BmsTopicTag;
 import com.community.model.entity.UmsUser;
 import com.community.model.vo.PostVO;
+import com.community.service.IBmsCommentService;
 import com.community.service.IBmsPostService;
 import com.community.service.IUmsUserService;
 import com.vdurmont.emoji.EmojiParser;
@@ -18,6 +23,7 @@ import javax.validation.Valid;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.community.jwt.JwtUtil.USER_NAME;
 
@@ -35,6 +41,8 @@ public class BmsPostController extends BaseController {
     private IBmsPostService iBmsPostService;
     @Resource
     private IUmsUserService umsUserService;
+    @Resource
+    private IBmsCommentService iBmsCommentService;
 
     @GetMapping("/list")
     public ApiResult<Page<PostVO>> list(@RequestParam(value = "tab", defaultValue = "latest") String tab,
@@ -83,6 +91,10 @@ public class BmsPostController extends BaseController {
         Assert.notNull(byId, "来晚一步，话题已不存在");
         Assert.isTrue(byId.getUserId().equals(umsUser.getId()), "你为什么可以删除别人的话题？？？");
         iBmsPostService.removeById(id);
+        //删除帖子下的评论，根据topic-id查询记录并删除
+        QueryWrapper<BmsComment> wrapper = new QueryWrapper<>();
+        wrapper.lambda().eq(BmsComment::getTopicId, id);
+        iBmsCommentService.remove(wrapper);
         return ApiResult.success(null,"删除成功");
     }
 
