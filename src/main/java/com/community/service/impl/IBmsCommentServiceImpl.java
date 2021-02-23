@@ -1,5 +1,6 @@
 package com.community.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.community.mapper.BmsCommentMapper;
 import com.community.model.dto.CommentDTO;
@@ -45,4 +46,14 @@ public class IBmsCommentServiceImpl extends ServiceImpl<BmsCommentMapper, BmsCom
         this.baseMapper.insert(comment);
         return comment;
     }
+
+    @Override
+    public int deleteComments(String id) {
+        QueryWrapper<BmsComment> wrapper = new QueryWrapper<>();
+        wrapper.lambda().eq(BmsComment::getTopicId, id);
+        this.baseMapper.delete(wrapper);
+        return 0;
+    }
+
+
 }

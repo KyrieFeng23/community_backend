@@ -10,6 +10,8 @@ import com.community.model.entity.*;
 import com.community.model.vo.PostVO;
 import com.community.service.*;
 import com.vdurmont.emoji.EmojiParser;
+import jdk.jfr.Threshold;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -84,6 +86,7 @@ public class BmsPostController extends BaseController {
         return ApiResult.success(post);
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @DeleteMapping("/delete/{id}")
     public ApiResult<String> delete(@RequestHeader(value = USER_NAME) String userName, @PathVariable("id") String id) {
         UmsUser umsUser = umsUserService.getUserByUsername(userName);
@@ -92,9 +95,7 @@ public class BmsPostController extends BaseController {
         Assert.isTrue(byId.getUserId().equals(umsUser.getId()), "你为什么可以删除别人的话题？？？");
         iBmsPostService.removeById(id);
         //删除帖子下的评论，根据topic-id查询记录并删除
-        QueryWrapper<BmsComment> wrapper = new QueryWrapper<>();
-        wrapper.lambda().eq(BmsComment::getTopicId, id);
-        iBmsCommentService.remove(wrapper);
+        iBmsCommentService.deleteComments(id);
         //删除对应标签记录。
         QueryWrapper<BmsTopicTag> bmsTopicTagQueryWrapper=new QueryWrapper<>();
         bmsTopicTagQueryWrapper.lambda().eq(BmsTopicTag::getTopicId,id);

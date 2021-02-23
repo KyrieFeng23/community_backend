@@ -24,4 +24,6 @@ public interface IBmsCommentService extends IService<BmsComment> {
     List<CommentVO> getCommentsByTopicID(String topicid);
 
     BmsComment create(CommentDTO dto, UmsUser principal);
+
+    int deleteComments(String id);
 }

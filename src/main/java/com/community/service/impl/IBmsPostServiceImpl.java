@@ -136,6 +136,13 @@ public class IBmsPostServiceImpl extends ServiceImpl<BmsTopicMapper, BmsPost> im
         return iPage;
     }
 
+    @Override
+    public void updateCommentCount(String topic_id) {
+        BmsPost bmsPost = this.getById(topic_id);
+        bmsPost.setComments(bmsPost.getComments() + 1);
+        this.baseMapper.updateById(bmsPost);
+    }
+
     private void setTopicTags(Page<PostVO> iPage) {
         iPage.getRecords().forEach(topic -> {
 //            根据帖子id找出topictag表里对应的记录
