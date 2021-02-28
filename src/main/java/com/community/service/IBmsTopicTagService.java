@@ -1,8 +1,10 @@
 package com.community.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.community.model.entity.BmsPost;
 import com.community.model.entity.BmsTag;
 import com.community.model.entity.BmsTopicTag;
+import com.community.model.entity.UmsUser;
 
 import java.util.List;
 import java.util.Set;
@@ -39,4 +41,11 @@ public interface IBmsTopicTagService extends IService<BmsTopicTag> {
      * @return
      */
     Set<String> selectTopicIdsByTagId(String id);
+
+    /**
+     * 更新帖子和标签的关联表
+     * @param topicId
+     * @param tags
+     */
+    void updateTopicTag(String topicId, List<String> tags);
 }

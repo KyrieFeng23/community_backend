@@ -24,6 +24,13 @@ public interface IBmsTagService extends IService<BmsTag> {
     List<BmsTag> insertTags(List<String> tags);
 
     /**
+     * 更新文章标签
+     * @param tags
+     * @return
+     */
+    List<BmsTag> updateTags(String post_id, List<String> tags);
+
+    /**
      * 获取标签关联话题
      *
      * @param topicPage
@@ -37,5 +44,5 @@ public interface IBmsTagService extends IService<BmsTag> {
      * @param tag_id
      * @return
      */
-    int updateTags(String tag_id);
+    void updateTopicCount(String tag_id);
 }

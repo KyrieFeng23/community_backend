@@ -37,6 +37,15 @@ public interface IBmsPostService extends IService<BmsPost> {
     BmsPost create(CreateTopicDTO dto, UmsUser principal);
 
     /**
+     * 编辑帖子
+     *
+     * @param post
+     * @param tags
+     * @return
+     */
+    BmsPost updateTopic(BmsPost post,List<String> tags);
+
+    /**
      * 查看话题详情
      *
      * @param id

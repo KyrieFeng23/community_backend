@@ -2,16 +2,24 @@ package com.community.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.community.mapper.BmsTopicTagMapper;
+import com.community.model.entity.BmsPost;
 import com.community.model.entity.BmsTag;
 import com.community.model.entity.BmsTopicTag;
+import com.community.model.entity.UmsUser;
+import com.community.service.IBmsTagService;
 import com.community.service.IBmsTopicTagService;
+import org.hibernate.validator.internal.util.stereotypes.Lazy;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Description:
@@ -22,6 +30,10 @@ import java.util.Set;
 @Service
 @Transactional(rollbackFor = Exception.class)
 public class IBmsTopicTagServiceImpl extends ServiceImpl<BmsTopicTagMapper, BmsTopicTag> implements IBmsTopicTagService {
+
+    @Autowired
+    @Lazy
+    private IBmsTagService iBmsTagService;
 
     @Override
     public List<BmsTopicTag> selectByTopicId(String topicId) {
@@ -51,5 +63,19 @@ public class IBmsTopicTagServiceImpl extends ServiceImpl<BmsTopicTagMapper, BmsT
     public Set<String> selectTopicIdsByTagId(String id) {
         return this.baseMapper.getTopicIdsByTagId(id);
     }
+
+    @Override
+    public void updateTopicTag(String topicId, List<String> tags) {
+        if (!ObjectUtils.isEmpty(tags)) {
+
+            List<BmsTag> tagList = new ArrayList<>();
+            for (String tag : tags){
+                BmsTag bmsTag = iBmsTagService.getOne(new LambdaQueryWrapper<BmsTag>().eq(BmsTag::getName, tag));
+                tagList.add(bmsTag);
+            }
+            this.createTopicTag(topicId,tagList);
+        }
+    }
+
 
 }

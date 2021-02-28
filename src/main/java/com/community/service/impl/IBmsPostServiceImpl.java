@@ -18,6 +18,7 @@ import com.community.model.vo.PostVO;
 import com.community.model.vo.ProfileVO;
 import com.community.service.IBmsPostService;
 import com.community.service.IBmsTagService;
+import com.community.service.IBmsTopicTagService;
 import com.community.service.IUmsUserService;
 import com.vdurmont.emoji.EmojiParser;
 import org.hibernate.validator.internal.util.stereotypes.Lazy;
@@ -50,7 +51,7 @@ public class IBmsPostServiceImpl extends ServiceImpl<BmsTopicMapper, BmsPost> im
     private IUmsUserService iUmsUserService;
 
     @Autowired
-    private com.community.service.IBmsTopicTagService IBmsTopicTagService;
+    private IBmsTopicTagService iBmsTopicTagService;
 
     @Override
     public Page<PostVO> getList(Page<PostVO> page, String tab) {
@@ -87,10 +88,24 @@ public class IBmsPostServiceImpl extends ServiceImpl<BmsTopicMapper, BmsPost> im
             // 保存标签
             List<BmsTag> tags = iBmsTagService.insertTags(dto.getTags());
             // 处理标签与话题的关联
-            IBmsTopicTagService.createTopicTag(topic.getId(), tags);
+            iBmsTopicTagService.createTopicTag(topic.getId(), tags);
         }
 
         return topic;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BmsPost updateTopic(BmsPost post, List<String> tags) {
+        post.setModifyTime(new Date());
+        post.setContent(EmojiParser.parseToAliases(post.getContent()));
+        this.updateById(post);
+        //先更新标签，顺序不能反
+        iBmsTagService.updateTags(post.getId(),tags);
+        //更新标签和帖子关联信息
+        iBmsTopicTagService.updateTopicTag(post.getId(),tags);
+
+        return post;
     }
 
     @Override
@@ -108,7 +123,7 @@ public class IBmsPostServiceImpl extends ServiceImpl<BmsTopicMapper, BmsPost> im
         QueryWrapper<BmsTopicTag> wrapper = new QueryWrapper<>();
         wrapper.lambda().eq(BmsTopicTag::getTopicId, topic.getId());
         Set<String> set = new HashSet<>();
-        for (BmsTopicTag articleTag : IBmsTopicTagService.list(wrapper)) {
+        for (BmsTopicTag articleTag : iBmsTopicTagService.list(wrapper)) {
             set.add(articleTag.getTagId());
         }
         List<BmsTag> tags = iBmsTagService.listByIds(set);
@@ -146,7 +161,7 @@ public class IBmsPostServiceImpl extends ServiceImpl<BmsTopicMapper, BmsPost> im
     private void setTopicTags(Page<PostVO> iPage) {
         iPage.getRecords().forEach(topic -> {
 //            根据帖子id找出topictag表里对应的记录
-            List<BmsTopicTag> topicTags = IBmsTopicTagService.selectByTopicId(topic.getId());
+            List<BmsTopicTag> topicTags = iBmsTopicTagService.selectByTopicId(topic.getId());
             if (!topicTags.isEmpty()) {
 //              获取topictag里的tagid集合，当前帖子的所有标签id
 //              topictags是整个类的集合，下面这一步操作是把类的集合的tagid提取出来合成一个新的集合

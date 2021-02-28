@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.Assert;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.community.common.api.ApiResult;
 import com.community.model.dto.CreateTopicDTO;
+import com.community.model.dto.UpdateTopicDTO;
 import com.community.model.entity.*;
 import com.community.model.vo.PostVO;
 import com.community.service.*;
@@ -77,13 +78,13 @@ public class BmsPostController extends BaseController {
     }
 
     @PostMapping("/update")
-    public ApiResult<BmsPost> update(@RequestHeader(value = USER_NAME) String userName, @Valid @RequestBody BmsPost post) {
+    public ApiResult<BmsPost> update(@RequestHeader(value = USER_NAME) String userName,
+                                     @RequestBody UpdateTopicDTO dto) {
         UmsUser umsUser = umsUserService.getUserByUsername(userName);
-        Assert.isTrue(umsUser.getId().equals(post.getUserId()), "非本人无权修改");
-        post.setModifyTime(new Date());
-        post.setContent(EmojiParser.parseToAliases(post.getContent()));
-        iBmsPostService.updateById(post);
-        return ApiResult.success(post);
+        Assert.isTrue(umsUser.getId().equals(dto.getTopic().getUserId()), "非本人无权修改");
+
+        BmsPost bmspost = iBmsPostService.updateTopic(dto.getTopic(),dto.getTags());
+        return ApiResult.success(bmspost);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -109,7 +110,7 @@ public class BmsPostController extends BaseController {
 //              这是java8的一种写法，免去再次遍历的麻烦
             List<String> tagIds = bmsTopicTagList.stream().map(BmsTopicTag::getTagId).collect(Collectors.toList());
             tagIds.forEach(tagid->{
-                iBmsTagService.updateTags(tagid);
+                iBmsTagService.updateTopicCount(tagid);
             });
         }
         return ApiResult.success(null,"删除成功");
