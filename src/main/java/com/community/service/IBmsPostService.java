@@ -72,9 +72,10 @@ public interface IBmsPostService extends IService<BmsPost> {
     Page<PostVO> searchByKey(String keyword, Page<PostVO> page);
 
     /**
-     * 根据帖子id更新评论数
+     * 根据帖子id和更新方式更新评论数
      * @param topic_id
+     * @param isAdd
      */
-    void updateCommentCount(String topic_id);
+    void updateCommentCount(String topic_id,boolean isAdd);
 
 }

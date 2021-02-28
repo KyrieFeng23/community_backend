@@ -152,9 +152,13 @@ public class IBmsPostServiceImpl extends ServiceImpl<BmsTopicMapper, BmsPost> im
     }
 
     @Override
-    public void updateCommentCount(String topic_id) {
+    public void updateCommentCount(String topic_id, boolean isAdd) {
         BmsPost bmsPost = this.getById(topic_id);
-        bmsPost.setComments(bmsPost.getComments() + 1);
+        if (isAdd) {
+            bmsPost.setComments(bmsPost.getComments() + 1);
+        }else{
+            bmsPost.setComments(bmsPost.getComments() - 1);
+        }
         this.baseMapper.updateById(bmsPost);
     }
 

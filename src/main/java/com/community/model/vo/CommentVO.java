@@ -25,4 +25,5 @@ public class CommentVO {
 
     private Date createTime;
 
+    private String alias;
 }
